@@ -1,0 +1,54 @@
+numpy>=1.26.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
+pandas>=2.0.0
+openpyxl>=3.1.0  # Excel dosyaları için
+matplotlib>=3.7.0
+seaborn>=0.12.0
+streamlit>=1.25.0
+plotly>=5.15.0
+pillow>=10.0.0
+nltk>=3.8.0
+jupyter>=1.0.0
+ipywidgets>=8.1.0
+tqdm>=4.65.0
+
+# ============================================================================
+# MODERN DEEP LEARNING ALGORİTMALARI İÇİN BAĞIMLILIKLAR
+# ============================================================================
+
+# PyTorch tabanlı algoritmalar (Python 3.14 uyumlu ✅)
+# Tüm modern algoritmalar PyTorch ile çalışıyor:
+# - NCF (Neural Collaborative Filtering)
+# - Autoencoder (Denoising)
+# - VAE (Variational Autoencoder)
+# - FM (Factorization Machine)
+# - DeepFM
+# - Transformer (BERT4Rec/SASRec)
+# - GNN (Graph Neural Network)
+torch>=2.1.0
+torch-geometric>=2.4.0
+
+# ============================================================================
+# OPSİYONEL PAKETLER
+# ============================================================================
+
+# Opsiyonel NLP paketleri (Transformer algoritması için gerekli değil)
+# transformers>=4.35.0  # Opsiyonel - bizim implementasyonumuz PyTorch kullanıyor
+# sentencepiece>=0.1.99
+
+# Topic Modeling görselleştirme için (derleme gerektirir)
+# wordcloud>=1.9.0  # Opsiyonel - C++ build tools ve Python development headers gerektirir
+
+# ============================================================================
+# AI CHATBOT İÇİN BAĞIMLILIKLAR
+# ============================================================================
+
+# PandasAI - Doğal dil ile veri analizi için
+# ⚠️ NOT: PandasAI 2.3.2 Python 3.14 ile uyumlu değil (Pydantic v1 sorunu)
+# Python 3.11 veya 3.12 kullanmanız önerilir
+# Alternatif: LangChain pandas agent kullanılabilir
+pandasai>=2.0.0
+openai>=1.0.0  # OpenAI API için (PandasAI ile kullanılır)
+google-generativeai>=0.3.0  # Google Gemini API için
+

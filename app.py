@@ -2616,6 +2616,52 @@ def show_als_recommender():
                 )
                 
                 if data_format == "Long Format (user_id, item_id, rating)":
+                    # Manuel sütun seçimi
+                    st.markdown("#### 📋 Sütun Seçimi (Opsiyonel)")
+                    use_manual_cols = st.checkbox(
+                        "Manuel olarak sütun seçmek istiyorum", 
+                        key="als_manual_cols",
+                        help="Otomatik tespit yanlış çalışıyorsa, bu seçeneği işaretleyin"
+                    )
+                    
+                    user_col_manual = None
+                    item_col_manual = None
+                    rating_col_manual = None
+                    
+                    if use_manual_cols and preview_df is not None:
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            user_col_manual = st.selectbox(
+                                "Kullanıcı ID Sütunu",
+                                options=preview_df.columns.tolist(),
+                                key="als_user_col",
+                                help="Kullanıcı ID'lerini içeren sütun"
+                            )
+                        with col2:
+                            item_col_manual = st.selectbox(
+                                "Ürün/Öğe ID Sütunu",
+                                options=preview_df.columns.tolist(),
+                                index=min(1, len(preview_df.columns)-1),
+                                key="als_item_col",
+                                help="Ürün/Öğe ID'lerini içeren sütun"
+                            )
+                        with col3:
+                            # Sayısal sütunları bul
+                            numeric_cols = preview_df.select_dtypes(include=[np.number]).columns.tolist()
+                            if not numeric_cols:
+                                numeric_cols = preview_df.columns.tolist()
+                            
+                            default_idx = min(2, len(numeric_cols)-1) if numeric_cols else 0
+                            rating_col_manual = st.selectbox(
+                                "Rating/Puan Sütunu",
+                                options=numeric_cols if numeric_cols else preview_df.columns.tolist(),
+                                index=default_idx,
+                                key="als_rating_col",
+                                help="Rating/Puan değerlerini içeren sütun (sayısal olmalı)"
+                            )
+                        
+                        st.info(f"✅ Seçilen: `{user_col_manual}` (kullanıcı) + `{item_col_manual}` (ürün) + `{rating_col_manual}` (rating)")
+                    
                     if st.button("📥 Veriyi Yükle", key="als_load_long"):
                         with st.spinner("Veri yükleniyor..."):
                             # Dosya bilgilerini kaydet
@@ -2629,11 +2675,21 @@ def show_als_recommender():
                                 file_bytes = io.BytesIO(st.session_state.als_file_content)
                                 # Dosya objesi gibi davranması için name attribute ekle
                                 file_bytes.name = file_name
-                                rating_matrix, user_mapping, item_mapping = load_rating_data_from_file(file_bytes)
+                                rating_matrix, user_mapping, item_mapping = load_rating_data_from_file(
+                                    file_bytes, 
+                                    user_col=user_col_manual, 
+                                    item_col=item_col_manual, 
+                                    rating_col=rating_col_manual
+                                )
                             else:
                                 # Fallback: dosyayı tekrar oku
                                 file.seek(0)
-                                rating_matrix, user_mapping, item_mapping = load_rating_data_from_file(file)
+                                rating_matrix, user_mapping, item_mapping = load_rating_data_from_file(
+                                    file, 
+                                    user_col=user_col_manual, 
+                                    item_col=item_col_manual, 
+                                    rating_col=rating_col_manual
+                                )
                             
                             # Dosya bilgilerini session state'e kaydet
                             st.session_state.als_file_name = file_name

@@ -300,15 +300,28 @@ def load_rating_data_from_file(file, user_col=None, item_col=None, rating_col=No
     if rating_col is None:
         # Olası rating sütunu isimleri
         possible_rating_cols = ['rating', 'Rating', 'RATING', 'score', 'Score',
-                               'value', 'Value', 'preference', 'Preference']
+                               'value', 'Value', 'preference', 'Preference', 
+                               'estimate', 'Estimate', 'price', 'Price', 
+                               'amount', 'Amount', 'count', 'Count']
         rating_col = None
+        
+        # Önce bilinen isimlere bak
         for col in df.columns:
             if col.lower() in [c.lower() for c in possible_rating_cols]:
                 rating_col = col
                 break
+        
+        # Eğer bulunamadıysa, sayısal sütunları kontrol et
         if rating_col is None:
-            # Üçüncü sütunu dene
-            rating_col = df.columns[2] if len(df.columns) > 2 else df.columns[-1]
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            # user_col ve item_col dışında kalan sayısal sütunları bul
+            candidate_cols = [col for col in numeric_cols if col not in [user_col, item_col]]
+            if candidate_cols:
+                # İlk sayısal sütunu seç
+                rating_col = candidate_cols[0]
+            else:
+                # Son çare: üçüncü sütunu dene
+                rating_col = df.columns[2] if len(df.columns) > 2 else df.columns[-1]
     
     # Gerekli sütunları kontrol et
     required_cols = [user_col, item_col, rating_col]

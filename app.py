@@ -2014,19 +2014,38 @@ def extract_text_from_file(uploaded_file):
             try:
                 from docx import Document
                 doc = Document(io.BytesIO(file_content))
-                # Her paragrafı bir doküman olarak al
-                paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
+                
+                # Paragraflardan metin çıkar
+                paragraphs = []
+                for p in doc.paragraphs:
+                    text = p.text.strip()
+                    if text:
+                        paragraphs.append(text)
+                
+                # Tablolardan da metin çıkar
+                for table in doc.tables:
+                    for row in table.rows:
+                        row_text = ' '.join([cell.text.strip() for cell in row.cells if cell.text.strip()])
+                        if row_text:
+                            paragraphs.append(row_text)
+                
+                # Başlıklar ve listeler de dahil
                 if paragraphs:
                     documents = paragraphs
                 else:
-                    # Tablolardan da metin çıkar
-                    for table in doc.tables:
-                        for row in table.rows:
-                            row_text = ' '.join([cell.text.strip() for cell in row.cells if cell.text.strip()])
-                            if row_text:
-                                documents.append(row_text)
+                    raise ValueError("Word dosyasından hiç metin çıkarılamadı. Dosya boş olabilir.")
+                    
             except ImportError:
                 raise ImportError("Word dosyaları için 'python-docx' kütüphanesi gerekli. Yüklemek için: pip install python-docx")
+            except Exception as e:
+                if file_name.endswith('.doc'):
+                    raise ValueError(
+                        f"Eski .doc formatındaki dosya okunamadı. "
+                        f"Lütfen dosyanızı .docx formatına dönüştürün (Word'de 'Farklı Kaydet' ile .docx olarak kaydedin). "
+                        f"Hata detayı: {str(e)}"
+                    )
+                else:
+                    raise ValueError(f"Word dosyası okunamadı: {str(e)}")
         
         elif file_name.endswith('.pdf'):
             # PDF dosyası
@@ -2153,6 +2172,18 @@ def show_nmf_topic_modeling():
     
     if data_source == "📁 Dosya Yükle (Word/PDF/Excel/CSV/TXT)":
         st.markdown("### 📤 Dosya Yükle")
+        
+        # Bilgilendirme
+        st.info("""
+        **📝 Desteklenen Dosya Formatları:**
+        - **Word**: .docx (önerilen), .doc (eski format - .docx'e dönüştürmeniz önerilir)
+        - **PDF**: .pdf
+        - **Excel**: .xlsx, .xls
+        - **Metin**: .txt, .csv
+        
+        **💡 İpucu:** Her paragraf ayrı bir doküman olarak işlenecektir.
+        """)
+        
         uploaded_file = st.file_uploader(
             "Dosya seçin (Word, PDF, Excel, CSV, TXT)",
             type=['xlsx', 'xls', 'csv', 'txt', 'docx', 'doc', 'pdf'],

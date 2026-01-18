@@ -328,6 +328,32 @@ def get_optimal_model_params(model_name, data_shape=None, n_samples=None, n_feat
     return params
 
 
+def read_csv_with_encoding(file_bytes, **kwargs):
+    """
+    CSV dosyasını farklı encoding'lerle deneyerek okur
+    
+    Args:
+        file_bytes: BytesIO file object
+        **kwargs: pandas read_csv için diğer parametreler
+        
+    Returns:
+        DataFrame
+    """
+    encodings = ['utf-8', 'cp1252', 'windows-1254', 'latin-1', 'iso-8859-9', 'iso-8859-1']
+    
+    for encoding in encodings:
+        try:
+            file_bytes.seek(0)
+            df = pd.read_csv(file_bytes, encoding=encoding, **kwargs)
+            return df
+        except (UnicodeDecodeError, pd.errors.ParserError):
+            continue
+    
+    # Son çare: encoding hatalarını yoksay
+    file_bytes.seek(0)
+    return pd.read_csv(file_bytes, encoding='utf-8', encoding_errors='ignore', **kwargs)
+
+
 def get_file_format_selector(model_name="model", include_image=False):
     """
     Dosya formatı seçici widget'ı döndürür
@@ -469,11 +495,9 @@ def show_svd_recommender():
                             max_cols = len(cols)
                             detected_delimiter = delim
                     
-                    file_bytes.seek(0)
-                    preview_df = pd.read_csv(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
-                    # Toplam satır sayısı için dosyayı tekrar oku
-                    file_bytes.seek(0)
-                    total_df = pd.read_csv(file_bytes, sep=detected_delimiter, engine='python')
+                    # Encoding ile oku
+                    preview_df = read_csv_with_encoding(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
+                    total_df = read_csv_with_encoding(file_bytes, sep=detected_delimiter, engine='python')
                 elif file.name.endswith(('.xlsx', '.xls')):
                     file_bytes.seek(0)
                     preview_df = pd.read_excel(file_bytes, nrows=5)
@@ -2576,11 +2600,9 @@ def show_als_recommender():
                             max_cols = len(cols)
                             detected_delimiter = delim
                     
-                    file_bytes.seek(0)
-                    preview_df = pd.read_csv(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
-                    # Toplam satır sayısı için dosyayı tekrar oku
-                    file_bytes.seek(0)
-                    total_df = pd.read_csv(file_bytes, sep=detected_delimiter, engine='python')
+                    # Encoding ile oku
+                    preview_df = read_csv_with_encoding(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
+                    total_df = read_csv_with_encoding(file_bytes, sep=detected_delimiter, engine='python')
                 elif file.name.endswith(('.xlsx', '.xls')):
                     file_bytes.seek(0)
                     preview_df = pd.read_excel(file_bytes, nrows=5)
@@ -3539,8 +3561,7 @@ def show_ncf_recommender():
                             max_cols = len(cols)
                             detected_delimiter = delim
                     
-                    file_bytes.seek(0)
-                    preview_df = pd.read_csv(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
+                    preview_df = read_csv_with_encoding(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
                     file_bytes.seek(0)
                     total_df = pd.read_csv(file_bytes, sep=detected_delimiter, engine='python')
                 elif file.name.endswith(('.xlsx', '.xls')):
@@ -4284,8 +4305,7 @@ def show_vae_recommender():
                             max_cols = len(cols)
                             detected_delimiter = delim
                     
-                    file_bytes.seek(0)
-                    preview_df = pd.read_csv(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
+                    preview_df = read_csv_with_encoding(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
                     file_bytes.seek(0)
                     total_df = pd.read_csv(file_bytes, sep=detected_delimiter, engine='python')
                 elif file.name.endswith(('.xlsx', '.xls')):
@@ -4614,8 +4634,7 @@ def show_fm_recommender():
                             max_cols = len(cols)
                             detected_delimiter = delim
                     
-                    file_bytes.seek(0)
-                    preview_df = pd.read_csv(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
+                    preview_df = read_csv_with_encoding(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
                     file_bytes.seek(0)
                     total_df = pd.read_csv(file_bytes, sep=detected_delimiter, engine='python')
                 elif file.name.endswith(('.xlsx', '.xls')):
@@ -4949,8 +4968,7 @@ def show_deepfm_recommender():
                     for delim in delimiters:
                         if len(first_line.split(delim)) > len(first_line.split(detected_delimiter)):
                             detected_delimiter = delim
-                    file_bytes.seek(0)
-                    preview_df = pd.read_csv(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
+                    preview_df = read_csv_with_encoding(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
                 elif file.name.endswith(('.xlsx', '.xls')):
                     file_bytes.seek(0)
                     preview_df = pd.read_excel(file_bytes, nrows=5)

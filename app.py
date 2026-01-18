@@ -3899,7 +3899,7 @@ def show_autoencoder_denoising():
                 
                 # Dosya tipine göre yükle
                 if file_name.endswith('.csv'):
-                    df = pd.read_csv(file_bytes)
+                    df = read_csv_with_encoding(file_bytes)
                 elif file_name.endswith(('.xlsx', '.xls')):
                     df = pd.read_excel(file_bytes)
                 else:

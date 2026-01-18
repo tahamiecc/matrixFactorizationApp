@@ -3488,6 +3488,9 @@ def show_performance_comparison():
 
 def show_ncf_recommender():
     """NCF (Neural Collaborative Filtering) sayfası"""
+    import pandas as pd
+    import io
+    
     st.header("🧠 Neural Collaborative Filtering (NCF)")
     
     with st.expander("ℹ️ NCF Nedir?", expanded=False):
@@ -3562,8 +3565,7 @@ def show_ncf_recommender():
                             detected_delimiter = delim
                     
                     preview_df = read_csv_with_encoding(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
-                    file_bytes.seek(0)
-                    total_df = pd.read_csv(file_bytes, sep=detected_delimiter, engine='python')
+                    total_df = read_csv_with_encoding(file_bytes, sep=detected_delimiter, engine='python')
                 elif file.name.endswith(('.xlsx', '.xls')):
                     file_bytes.seek(0)
                     preview_df = pd.read_excel(file_bytes, nrows=5)
@@ -4232,6 +4234,9 @@ def show_autoencoder_denoising():
 
 def show_vae_recommender():
     """VAE (Variational Autoencoder) sayfası"""
+    import pandas as pd
+    import io
+    
     st.header("🎯 Variational Autoencoder (VAE) - Öneri Sistemi")
     
     with st.expander("ℹ️ VAE Nedir?", expanded=False):
@@ -4306,8 +4311,7 @@ def show_vae_recommender():
                             detected_delimiter = delim
                     
                     preview_df = read_csv_with_encoding(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
-                    file_bytes.seek(0)
-                    total_df = pd.read_csv(file_bytes, sep=detected_delimiter, engine='python')
+                    total_df = read_csv_with_encoding(file_bytes, sep=detected_delimiter, engine='python')
                 elif file.name.endswith(('.xlsx', '.xls')):
                     file_bytes.seek(0)
                     preview_df = pd.read_excel(file_bytes, nrows=5)
@@ -4558,6 +4562,9 @@ def show_vae_recommender():
 
 def show_fm_recommender():
     """Factorization Machines sayfası"""
+    import pandas as pd
+    import io
+    
     st.header("🔗 Factorization Machines (FM)")
     
     with st.expander("ℹ️ FM Nedir?", expanded=False):
@@ -4635,8 +4642,7 @@ def show_fm_recommender():
                             detected_delimiter = delim
                     
                     preview_df = read_csv_with_encoding(file_bytes, nrows=5, sep=detected_delimiter, engine='python')
-                    file_bytes.seek(0)
-                    total_df = pd.read_csv(file_bytes, sep=detected_delimiter, engine='python')
+                    total_df = read_csv_with_encoding(file_bytes, sep=detected_delimiter, engine='python')
                 elif file.name.endswith(('.xlsx', '.xls')):
                     file_bytes.seek(0)
                     preview_df = pd.read_excel(file_bytes, nrows=5)
@@ -4903,6 +4909,9 @@ def show_fm_recommender():
 
 def show_deepfm_recommender():
     """DeepFM sayfası"""
+    import pandas as pd
+    import io
+    
     st.header("🚀 DeepFM - Factorization Machines + Deep Learning")
     
     with st.expander("ℹ️ DeepFM Nedir?", expanded=False):

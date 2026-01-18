@@ -354,6 +354,75 @@ def read_csv_with_encoding(file_bytes, **kwargs):
     return pd.read_csv(file_bytes, encoding='utf-8', encoding_errors='ignore', **kwargs)
 
 
+def explain_model_results_with_ai(model_name, model_params, data_info, results, api_key=None, provider="gemini"):
+    """
+    Model sonuçlarını AI ile açıklar
+    
+    Args:
+        model_name: Model adı (NCF, VAE, FM, vb.)
+        model_params: Model parametreleri (dict)
+        data_info: Veri bilgileri (dict)
+        results: Model sonuçları (dict)
+        api_key: API key (opsiyonel)
+        provider: AI provider ("gemini" veya "openai")
+        
+    Returns:
+        Açıklama metni (string)
+    """
+    # Prompt oluştur
+    prompt = f"""
+Sen bir makine öğrenmesi uzmanısın. Aşağıdaki {model_name} model sonuçlarını basit ve anlaşılır bir şekilde açıkla.
+
+**VERİ BİLGİLERİ:**
+{chr(10).join([f"- {key}: {value}" for key, value in data_info.items()])}
+
+**MODEL PARAMETRELERİ:**
+{chr(10).join([f"- {key}: {value}" for key, value in model_params.items()])}
+
+**SONUÇLAR:**
+{chr(10).join([f"- {key}: {value}" for key, value in results.items()])}
+
+Lütfen şunları açıkla:
+1. Bu sonuçlar ne anlama geliyor?
+2. Model ne kadar başarılı?
+3. Bu parametreler veriler için uygun mu?
+4. İyileştirme önerilerin var mı?
+
+Açıklamayı Türkçe, basit ve anlaşılır yap. Teknik terimleri açıkla.
+"""
+    
+    try:
+        if provider == "gemini":
+            if not api_key:
+                return "⚠️ Google Gemini API key gerekli. Lütfen sidebar'dan API key'inizi girin."
+            
+            import google.generativeai as genai
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-pro')
+            response = model.generate_content(prompt)
+            return response.text
+            
+        elif provider == "openai":
+            if not api_key:
+                return "⚠️ OpenAI API key gerekli. Lütfen sidebar'dan API key'inizi girin."
+            
+            import openai
+            openai.api_key = api_key
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "Sen bir makine öğrenmesi uzmanısın. Sonuçları basit ve anlaşılır açıklıyorsun."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=1000
+            )
+            return response.choices[0].message.content
+    
+    except Exception as e:
+        return f"❌ AI açıklama oluşturulamadı: {str(e)}\n\n💡 API key'inizin geçerli olduğundan emin olun."
+
+
 def get_file_format_selector(model_name="model", include_image=False):
     """
     Dosya formatı seçici widget'ı döndürür
@@ -3838,6 +3907,77 @@ def show_ncf_recommender():
                         'Tahmin Edilen Rating': np.round(np.clip(predicted_ratings, 1, 5), 2)
                     })
                     st.dataframe(recommendations_df, width='stretch')
+                    
+                    # AI Açıklama Bölümü
+                    st.markdown("---")
+                    st.subheader("🤖 AI Destekli Sonuç Açıklaması")
+                    
+                    with st.expander("💡 Sonuçlarım Ne Anlama Geliyor? (AI ile Açıklama)", expanded=False):
+                        st.info("🔑 Bu özellik için Google Gemini API key gereklidir. Ücretsiz key almak için: https://makersuite.google.com/app/apikey")
+                        
+                        gemini_api_key = st.text_input(
+                            "Google Gemini API Key",
+                            type="password",
+                            help="API key'inizi buraya girin",
+                            key="ncf_gemini_key"
+                        )
+                        
+                        if st.button("🔍 Sonuçları AI ile Açıkla", key="ncf_explain"):
+                            if not gemini_api_key:
+                                st.warning("⚠️ Lütfen önce API key'inizi girin.")
+                            else:
+                                with st.spinner("AI sonuçları analiz ediyor..."):
+                                    # Veri bilgilerini topla
+                                    if data_source == "📁 Dosyadan Yükle" and 'ncf_file_name' in st.session_state:
+                                        from scipy.sparse import issparse as issparse_check
+                                        if issparse_check(rating_matrix):
+                                            n_ratings = rating_matrix.nnz
+                                            sparsity_actual = 1 - (n_ratings / (n_users * n_items))
+                                        else:
+                                            mask = ~np.isnan(rating_matrix)
+                                            n_ratings = np.sum(mask)
+                                            sparsity_actual = np.isnan(rating_matrix).sum() / rating_matrix.size
+                                        
+                                        data_info = {
+                                            'Veri Kaynağı': f"Dosya: {st.session_state.ncf_file_name}",
+                                            'Kullanıcı Sayısı': n_users,
+                                            'Ürün Sayısı': n_items,
+                                            'Toplam Rating': n_ratings,
+                                            'Sparsity (Boşluk Oranı)': f"{sparsity_actual:.2%}"
+                                        }
+                                    else:
+                                        data_info = {
+                                            'Veri Kaynağı': 'Örnek Veri',
+                                            'Kullanıcı Sayısı': n_users,
+                                            'Ürün Sayısı': n_items
+                                        }
+                                    
+                                    model_params = {
+                                        'Latent Faktör Sayısı': n_factors,
+                                        'Gizli Katmanlar': hidden_layers_str,
+                                        'Dropout Rate': dropout,
+                                        'Epochs': epochs,
+                                        'Batch Size': batch_size,
+                                        'Eğitim Süresi': f"{training_time:.2f} saniye"
+                                    }
+                                    
+                                    results = {
+                                        'Final Loss': f"{history.history['loss'][-1]:.4f}" if history and hasattr(history, 'history') else 'N/A',
+                                        'Örnek Öneriler (Kullanıcı 0)': f"{len(item_indices)} ürün önerildi",
+                                        'Ortalama Tahmin': f"{np.mean(predicted_ratings):.2f}"
+                                    }
+                                    
+                                    explanation = explain_model_results_with_ai(
+                                        model_name='NCF (Neural Collaborative Filtering)',
+                                        model_params=model_params,
+                                        data_info=data_info,
+                                        results=results,
+                                        api_key=gemini_api_key,
+                                        provider='gemini'
+                                    )
+                                    
+                                    st.markdown("### 📝 AI Açıklaması")
+                                    st.markdown(explanation)
                     
                 except Exception as e:
                     st.error(f"❌ Hata: {str(e)}")

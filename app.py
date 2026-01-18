@@ -2612,7 +2612,7 @@ def show_als_recommender():
                     "Veri Formatı",
                     ["Long Format (user_id, item_id, rating)", "Matrix Format (Rating Matrisi)"],
                     horizontal=True,
-                    key="als_format"
+                    key="als_data_format"
                 )
                 
                 if data_format == "Long Format (user_id, item_id, rating)":

@@ -4695,6 +4695,73 @@ def show_vae_recommender():
                     })
                     st.dataframe(recommendations_df, width='stretch')
                     
+                    # AI Açıklama Bölümü
+                    st.markdown("---")
+                    st.subheader("🤖 AI Destekli Sonuç Açıklaması")
+                    
+                    with st.expander("💡 Sonuçlarım Ne Anlama Geliyor? (AI ile Açıklama)", expanded=False):
+                        st.info("🔑 Bu özellik için Google Gemini API key gereklidir. Ücretsiz key almak için: https://makersuite.google.com/app/apikey")
+                        
+                        gemini_api_key = st.text_input(
+                            "Google Gemini API Key",
+                            type="password",
+                            help="API key'inizi buraya girin",
+                            key="vae_gemini_key"
+                        )
+                        
+                        if st.button("🔍 Sonuçları AI ile Açıkla", key="vae_explain"):
+                            if not gemini_api_key:
+                                st.warning("⚠️ Lütfen önce API key'inizi girin.")
+                            else:
+                                with st.spinner("AI sonuçları analiz ediyor..."):
+                                    # Veri bilgilerini topla
+                                    if data_source == "📁 Dosyadan Yükle" and 'vae_file_name' in st.session_state:
+                                        from scipy.sparse import issparse as issparse_check
+                                        if issparse_check(rating_matrix):
+                                            n_ratings = rating_matrix.nnz
+                                            sparsity_actual = 1 - (n_ratings / (n_users * n_items))
+                                        else:
+                                            mask = ~np.isnan(rating_matrix)
+                                            n_ratings = np.sum(mask)
+                                            sparsity_actual = np.isnan(rating_matrix).sum() / rating_matrix.size
+                                        
+                                        data_info = {
+                                            'Veri Kaynağı': f"Dosya: {st.session_state.vae_file_name}",
+                                            'Kullanıcı Sayısı': n_users,
+                                            'Ürün Sayısı': n_items,
+                                            'Toplam Rating': n_ratings,
+                                            'Sparsity (Boşluk Oranı)': f"{sparsity_actual:.2%}"
+                                        }
+                                    else:
+                                        data_info = {
+                                            'Veri Kaynağı': 'Örnek Veri',
+                                            'Kullanıcı Sayısı': n_users,
+                                            'Ürün Sayısı': n_items
+                                        }
+                                    
+                                    model_params = {
+                                        'Latent Dimension': latent_dim,
+                                        'Epochs': epochs,
+                                        'Eğitim Süresi': f"{training_time:.2f} saniye"
+                                    }
+                                    
+                                    results = {
+                                        'Örnek Öneriler (Kullanıcı 0)': f"{len(item_indices)} ürün önerildi",
+                                        'Ortalama Tahmin': f"{np.mean(predicted_ratings):.2f}"
+                                    }
+                                    
+                                    explanation = explain_model_results_with_ai(
+                                        model_name='VAE (Variational Autoencoder)',
+                                        model_params=model_params,
+                                        data_info=data_info,
+                                        results=results,
+                                        api_key=gemini_api_key,
+                                        provider='gemini'
+                                    )
+                                    
+                                    st.markdown("### 📝 AI Açıklaması")
+                                    st.markdown(explanation)
+                    
                 except Exception as e:
                     st.error(f"❌ Hata: {str(e)}")
                     st.info("💡 PyTorch yüklü olduğundan emin olun: `pip install torch`")
@@ -5042,6 +5109,72 @@ def show_fm_recommender():
                     
                     st.info("💡 FM, context features kullanarak daha kişiselleştirilmiş öneriler sağlar.")
                     
+                    # AI Açıklama Bölümü
+                    st.markdown("---")
+                    st.subheader("🤖 AI Destekli Sonuç Açıklaması")
+                    
+                    with st.expander("💡 Sonuçlarım Ne Anlama Geliyor? (AI ile Açıklama)", expanded=False):
+                        st.info("🔑 Bu özellik için Google Gemini API key gereklidir. Ücretsiz key almak için: https://makersuite.google.com/app/apikey")
+                        
+                        gemini_api_key = st.text_input(
+                            "Google Gemini API Key",
+                            type="password",
+                            help="API key'inizi buraya girin",
+                            key="fm_gemini_key"
+                        )
+                        
+                        if st.button("🔍 Sonuçları AI ile Açıkla", key="fm_explain"):
+                            if not gemini_api_key:
+                                st.warning("⚠️ Lütfen önce API key'inizi girin.")
+                            else:
+                                with st.spinner("AI sonuçları analiz ediyor..."):
+                                    # Veri bilgilerini topla
+                                    if data_source == "📁 Dosyadan Yükle" and 'fm_file_name' in st.session_state:
+                                        from scipy.sparse import issparse as issparse_check
+                                        if issparse_check(rating_matrix):
+                                            n_ratings = rating_matrix.nnz
+                                        else:
+                                            mask = ~np.isnan(rating_matrix)
+                                            n_ratings = np.sum(mask)
+                                        
+                                        data_info = {
+                                            'Veri Kaynağı': f"Dosya: {st.session_state.fm_file_name}",
+                                            'Kullanıcı Sayısı': n_users,
+                                            'Ürün Sayısı': n_items,
+                                            'Toplam Rating': n_ratings,
+                                            'Context Features': '2 (saat, cihaz tipi - otomatik oluşturuldu)'
+                                        }
+                                    else:
+                                        data_info = {
+                                            'Veri Kaynağı': 'Örnek Veri',
+                                            'Kullanıcı Sayısı': n_users,
+                                            'Ürün Sayısı': n_items,
+                                            'Context Features': '2 (saat, cihaz tipi - otomatik oluşturuldu)'
+                                        }
+                                    
+                                    model_params = {
+                                        'Faktör Sayısı': n_factors,
+                                        'Epochs': epochs,
+                                        'Eğitim Süresi': f"{training_time:.2f} saniye"
+                                    }
+                                    
+                                    results = {
+                                        'Final Loss': f"{history.history['loss'][-1]:.4f}" if history and hasattr(history, 'history') else 'N/A',
+                                        'Model Tipi': 'Context-Aware Factorization Machine'
+                                    }
+                                    
+                                    explanation = explain_model_results_with_ai(
+                                        model_name='FM (Factorization Machines)',
+                                        model_params=model_params,
+                                        data_info=data_info,
+                                        results=results,
+                                        api_key=gemini_api_key,
+                                        provider='gemini'
+                                    )
+                                    
+                                    st.markdown("### 📝 AI Açıklaması")
+                                    st.markdown(explanation)
+                    
                 except Exception as e:
                     st.error(f"❌ Hata: {str(e)}")
                     st.info("💡 PyTorch yüklü olduğundan emin olun: `pip install torch`")
@@ -5312,6 +5445,71 @@ def show_deepfm_recommender():
                     
                     st.info("💡 DeepFM, hem doğrusal hem de doğrusal olmayan özellikleri öğrenir.")
                     
+                    # AI Açıklama Bölümü
+                    st.markdown("---")
+                    st.subheader("🤖 AI Destekli Sonuç Açıklaması")
+                    
+                    with st.expander("💡 Sonuçlarım Ne Anlama Geliyor? (AI ile Açıklama)", expanded=False):
+                        st.info("🔑 Bu özellik için Google Gemini API key gereklidir. Ücretsiz key almak için: https://makersuite.google.com/app/apikey")
+                        
+                        gemini_api_key = st.text_input(
+                            "Google Gemini API Key",
+                            type="password",
+                            help="API key'inizi buraya girin",
+                            key="deepfm_gemini_key"
+                        )
+                        
+                        if st.button("🔍 Sonuçları AI ile Açıkla", key="deepfm_explain"):
+                            if not gemini_api_key:
+                                st.warning("⚠️ Lütfen önce API key'inizi girin.")
+                            else:
+                                with st.spinner("AI sonuçları analiz ediyor..."):
+                                    # Veri bilgilerini topla
+                                    if data_source == "📁 Dosyadan Yükle" and 'deepfm_file_name' in st.session_state:
+                                        from scipy.sparse import issparse as issparse_check
+                                        if issparse_check(rating_matrix):
+                                            n_ratings = rating_matrix.nnz
+                                        else:
+                                            mask = ~np.isnan(rating_matrix)
+                                            n_ratings = np.sum(mask)
+                                        
+                                        data_info = {
+                                            'Veri Kaynağı': f"Dosya: {st.session_state.deepfm_file_name}",
+                                            'Kullanıcı Sayısı': n_users,
+                                            'Ürün Sayısı': n_items,
+                                            'Toplam Rating': n_ratings,
+                                            'Context Features': '2 (otomatik oluşturuldu)'
+                                        }
+                                    else:
+                                        data_info = {
+                                            'Veri Kaynağı': 'Örnek Veri',
+                                            'Kullanıcı Sayısı': n_users,
+                                            'Ürün Sayısı': n_items
+                                        }
+                                    
+                                    model_params = {
+                                        'FM Faktör Sayısı': n_factors,
+                                        'Epochs': epochs,
+                                        'Eğitim Süresi': f"{training_time:.2f} saniye"
+                                    }
+                                    
+                                    results = {
+                                        'Final Loss': f"{history.history['loss'][-1]:.4f}" if history and hasattr(history, 'history') else 'N/A',
+                                        'Model Tipi': 'DeepFM (FM + Deep Neural Network)'
+                                    }
+                                    
+                                    explanation = explain_model_results_with_ai(
+                                        model_name='DeepFM (Deep Factorization Machines)',
+                                        model_params=model_params,
+                                        data_info=data_info,
+                                        results=results,
+                                        api_key=gemini_api_key,
+                                        provider='gemini'
+                                    )
+                                    
+                                    st.markdown("### 📝 AI Açıklaması")
+                                    st.markdown(explanation)
+                    
                 except Exception as e:
                     st.error(f"❌ Hata: {str(e)}")
                     st.info("💡 PyTorch yüklü olduğundan emin olun: `pip install torch`")
@@ -5386,6 +5584,57 @@ def show_transformer_recommender():
                 st.dataframe(recommendations_df, width='stretch')
                 
                 st.info(f"💡 Kullanıcının geçmiş sequence'i: {[x+1 for x in example_sequence[-5:]]}")
+                
+                # AI Açıklama Bölümü
+                st.markdown("---")
+                st.subheader("🤖 AI Destekli Sonuç Açıklaması")
+                
+                with st.expander("💡 Sonuçlarım Ne Anlama Geliyor? (AI ile Açıklama)", expanded=False):
+                    st.info("🔑 Bu özellik için Google Gemini API key gereklidir. Ücretsiz key almak için: https://makersuite.google.com/app/apikey")
+                    
+                    gemini_api_key = st.text_input(
+                        "Google Gemini API Key",
+                        type="password",
+                        help="API key'inizi buraya girin",
+                        key="transformer_gemini_key"
+                    )
+                    
+                    if st.button("🔍 Sonuçları AI ile Açıkla", key="transformer_explain"):
+                        if not gemini_api_key:
+                            st.warning("⚠️ Lütfen önce API key'inizi girin.")
+                        else:
+                            with st.spinner("AI sonuçları analiz ediyor..."):
+                                data_info = {
+                                    'Veri Kaynağı': 'Sequential Örnek Veri',
+                                    'Kullanıcı Sayısı': n_users,
+                                    'Ürün Sayısı': n_items,
+                                    'Maksimum Sequence Uzunluğu': max_seq_length
+                                }
+                                
+                                model_params = {
+                                    'Model Boyutu (d_model)': d_model,
+                                    'Attention Head Sayısı': n_heads,
+                                    'Epochs': epochs,
+                                    'Model Tipi': 'Transformer (Self-Attention)'
+                                }
+                                
+                                results = {
+                                    'Örnek Kullanıcı Sequence': str([x+1 for x in example_sequence[-5:]]),
+                                    'Top 10 Tahmin': f"{len(item_indices)} ürün önerildi",
+                                    'Ortalama Olasılık': f"{np.mean(probabilities):.4f}"
+                                }
+                                
+                                explanation = explain_model_results_with_ai(
+                                    model_name='Transformer (Sequential Recommendation)',
+                                    model_params=model_params,
+                                    data_info=data_info,
+                                    results=results,
+                                    api_key=gemini_api_key,
+                                    provider='gemini'
+                                )
+                                
+                                st.markdown("### 📝 AI Açıklaması")
+                                st.markdown(explanation)
                 
             except Exception as e:
                 st.error(f"❌ Hata: {str(e)}")
@@ -5626,6 +5875,74 @@ def show_gnn_recommender():
                     st.dataframe(recommendations_df, width='stretch')
                     
                     st.info("💡 GNN, kullanıcı-ürün ilişkilerini graph olarak modelleyerek öneriler üretir.")
+                    
+                    # AI Açıklama Bölümü
+                    st.markdown("---")
+                    st.subheader("🤖 AI Destekli Sonuç Açıklaması")
+                    
+                    with st.expander("💡 Sonuçlarım Ne Anlama Geliyor? (AI ile Açıklama)", expanded=False):
+                        st.info("🔑 Bu özellik için Google Gemini API key gereklidir. Ücretsiz key almak için: https://makersuite.google.com/app/apikey")
+                        
+                        gemini_api_key = st.text_input(
+                            "Google Gemini API Key",
+                            type="password",
+                            help="API key'inizi buraya girin",
+                            key="gnn_gemini_key"
+                        )
+                        
+                        if st.button("🔍 Sonuçları AI ile Açıkla", key="gnn_explain"):
+                            if not gemini_api_key:
+                                st.warning("⚠️ Lütfen önce API key'inizi girin.")
+                            else:
+                                with st.spinner("AI sonuçları analiz ediyor..."):
+                                    # Veri bilgilerini topla
+                                    if data_source == "📁 Dosyadan Yükle" and 'gnn_file_name' in st.session_state:
+                                        from scipy.sparse import issparse as issparse_check
+                                        if issparse_check(rating_matrix):
+                                            n_ratings = rating_matrix.nnz
+                                            sparsity_actual = 1 - (n_ratings / (n_users * n_items))
+                                        else:
+                                            mask = ~np.isnan(rating_matrix)
+                                            n_ratings = np.sum(mask)
+                                            sparsity_actual = np.isnan(rating_matrix).sum() / rating_matrix.size
+                                        
+                                        data_info = {
+                                            'Veri Kaynağı': f"Dosya: {st.session_state.gnn_file_name}",
+                                            'Kullanıcı Sayısı': n_users,
+                                            'Ürün Sayısı': n_items,
+                                            'Toplam Rating': n_ratings,
+                                            'Sparsity (Boşluk Oranı)': f"{sparsity_actual:.2%}"
+                                        }
+                                    else:
+                                        data_info = {
+                                            'Veri Kaynağı': 'Örnek Veri',
+                                            'Kullanıcı Sayısı': n_users,
+                                            'Ürün Sayısı': n_items
+                                        }
+                                    
+                                    model_params = {
+                                        'Embedding Boyutu': embedding_dim,
+                                        'Epochs': epochs,
+                                        'Eğitim Süresi': f"{training_time:.2f} saniye",
+                                        'Model Tipi': 'Graph Neural Network (GNN)'
+                                    }
+                                    
+                                    results = {
+                                        'Örnek Öneriler (Kullanıcı 0)': f"{len(item_indices)} ürün önerildi",
+                                        'Ortalama Tahmin': f"{np.mean(predicted_ratings):.2f}"
+                                    }
+                                    
+                                    explanation = explain_model_results_with_ai(
+                                        model_name='GNN (Graph Neural Network)',
+                                        model_params=model_params,
+                                        data_info=data_info,
+                                        results=results,
+                                        api_key=gemini_api_key,
+                                        provider='gemini'
+                                    )
+                                    
+                                    st.markdown("### 📝 AI Açıklaması")
+                                    st.markdown(explanation)
                     
                 except ImportError:
                     st.error("❌ PyTorch ve PyTorch Geometric yüklü değil!")
